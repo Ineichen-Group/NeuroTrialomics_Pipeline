@@ -1,3 +1,6 @@
+./data/out/all_metadata_filtered.csv
+./data/in/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
