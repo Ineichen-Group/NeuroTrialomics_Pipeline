@@ -42,10 +42,10 @@ rule viz_country_map:
     script:
         "scripts/viz_countries.py"
 
-rule viz_reporting_status:
+rule viz_results_reporting_status:
     input:
         "data/out/trial_results_reporting_metadata.csv"
     output:
         "viz/completed_trials_results_reporting.pdf"
     script:
-        "scripts/viz_reporting_status.py"
+        "scripts/viz_results_reporting_status.py"
