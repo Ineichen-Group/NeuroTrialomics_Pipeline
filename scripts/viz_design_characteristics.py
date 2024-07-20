@@ -161,18 +161,74 @@ def viz_masking(trial_design, output_file):
     # Save the plot to a local folder
     plt.savefig(output_file)
 
+def viz_facilities_enrollment(trial_design, trials_with_participants, output_file):
+    labels = ['1', '2-10', '11-20', '21-30', '31-40', '41-50', '>50']
 
-def main(metadata_file, output_files):
+    # Prepare masking data
+    unique_pairs_facilities = trial_design[['nct_id', 'binned_facilities', 'number_of_facilities']].drop_duplicates()
+
+    # Count occurrences in each bin including NaN for 'not reported'
+    bin_counts_facilities = unique_pairs_facilities['binned_facilities'].value_counts().reindex(labels + [np.nan]).fillna(0)
+    bin_counts_facilities[np.nan] = len(unique_pairs_facilities[unique_pairs_facilities['number_of_facilities'].isna()])
+
+    # Count the occurrences of each enrollment class
+    enrollment_class_counts = trials_with_participants['enrollment_class'].value_counts().sort_index()
+
+    # Define the order of the categories
+    category_order_enrollment = ["0–10", "11–50", "51–100", "101–1,000", ">1,000"]
+
+    # Reorder the counts according to the specified category order
+    enrollment_class_counts = enrollment_class_counts.reindex(category_order_enrollment, fill_value=0)
+
+    # Create subplots
+    fig, axs = plt.subplots(1, 2, figsize=(16, 5))
+
+    # Plot for number_of_facilities
+    bin_counts_facilities = bin_counts_facilities.rename(index={np.nan: 'N.A.'})
+    bars_facilities = axs[0].bar(bin_counts_facilities.index.astype(str), bin_counts_facilities, color='lightgrey', zorder=3)
+    for i, value in enumerate(bin_counts_facilities):
+        axs[0].text(i, value + 0.1, str(int(value)), ha='center', va='bottom')
+
+    axs[0].tick_params(axis='y', labelsize=14)
+    axs[0].tick_params(axis='x', labelsize=14)
+    axs[0].grid(axis='y', linestyle='--', alpha=0.6, zorder=1)
+    axs[0].set_xlabel('Number of Facilities', fontsize=14)
+    axs[0].set_title('Number of Facilities', fontsize=14)
+    #plt.xticks(rotation=45)
+    axs[0].text(-0.01, 1.08, 'A', transform=axs[0].transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+
+    # Plot for enrollment
+    bars_enrollment = axs[1].bar(enrollment_class_counts.index, enrollment_class_counts.values, color='lightgrey', zorder=3)
+    for i, value in enumerate(enrollment_class_counts):
+        axs[1].text(i, value + 0.1, str(int(value)), ha='center', va='bottom')
+
+    axs[1].tick_params(axis='y', labelsize=14)
+    axs[1].tick_params(axis='x', labelsize=14)
+    axs[1].grid(axis='y', linestyle='--', alpha=0.6, zorder=1)
+    axs[1].set_xlabel('Number of Participants (Actual or Anticipated)', fontsize=14)
+    axs[1].set_title('Number of Enrolled Participants', fontsize=14)
+    axs[1].text(-0.01, 1.08, 'B', transform=axs[1].transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+    axs[1].set_ylim(0, max(enrollment_class_counts) + 1000) # Adjusted to max count for relevancy
+
+    plt.tight_layout()
+
+    plt.savefig(output_file)
+
+
+def main(metadata_file, enrollment_file, output_files):
     # Load the input files
     trial_metadata = pd.read_csv(metadata_file)
+    trial_enrollment = pd.read_csv(enrollment_file)
     viz_allocation(trial_metadata, output_files[0])
     viz_masking(trial_metadata, output_files[1])
+    viz_facilities_enrollment(trial_metadata, trial_enrollment, output_files[2])
 
 
 if __name__ == "__main__":
     if "snakemake" in globals():
         metadata_file = snakemake.input[0]
+        enrollment_file = snakemake.input[1]
         output_files = snakemake.output
-        main(metadata_file, output_files)
+        main(metadata_file, enrollment_file, output_files)
     else:
         raise RuntimeError("This script should be run using Snakemake.")
