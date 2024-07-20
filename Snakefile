@@ -29,7 +29,8 @@ rule viz_design_characteristics:
     output:
         "viz/design_allocation_over_time.pdf",
         "viz/design_masking_over_time.pdf",
-        "viz/design_trial_size_facilities_enrollment.pdf"
+        "viz/design_trial_size_facilities_enrollment.pdf",
+        "viz/design_outcomes_primary_secondary_number_frequency.pdf"
     script:
         "scripts/viz_design_characteristics.py"
 
