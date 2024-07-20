@@ -9,7 +9,6 @@ rule aact_data_map:
         "data/out/trial_design_metadata.csv",
         "data/out/trial_results_reporting_metadata.csv",
         "data/out/trial_sponsorship_metadata.csv",
-        "data/out/trial_country_metadata.csv",
         "data/out/trial_enrollment_metadata.csv"
     script:
         "scripts/prepare_aact_metadata.py"
@@ -25,9 +24,11 @@ rule viz_general_metadata:
 
 rule viz_design_characteristics:
     input:
-        "data/out/trial_design_metadata.csv"
+        "data/out/trial_design_metadata.csv",
+        "data/out/trial_enrollment_metadata.csv"
     output:
         "viz/design_allocation_over_time.pdf",
-        "viz/design_masking_over_time.pdf"
+        "viz/design_masking_over_time.pdf",
+        "viz/design_trial_size_facilities_enrollment.pdf"
     script:
         "scripts/viz_design_characteristics.py"
