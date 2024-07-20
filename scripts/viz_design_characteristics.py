@@ -214,6 +214,57 @@ def viz_facilities_enrollment(trial_design, trials_with_participants, output_fil
 
     plt.savefig(output_file)
 
+def viz_outcomes(trial_design, output_file):
+    labels = ['1', '2-5', '6-10', '11-20', '>20']
+
+    unique_pairs_primary_outocome = trial_design[['nct_id', 'number_of_primary_outcomes_to_measure', 'binned_primary_outcomes']].drop_duplicates()
+
+    # Count occurrences in each bin including NaN for 'not reported'
+    bin_counts_primary_outcomes = unique_pairs_primary_outocome['binned_primary_outcomes'].value_counts().reindex(labels + [np.nan]).fillna(0)
+    bin_counts_primary_outcomes[np.nan] = len(unique_pairs_primary_outocome[unique_pairs_primary_outocome['number_of_primary_outcomes_to_measure'].isna()])
+
+    # Create subplots
+    fig, axs = plt.subplots(1, 2, figsize=(16, 5))
+
+    bin_counts_primary_outcomes = bin_counts_primary_outcomes.rename(index={pd.NA: 'N.A.'})
+    bin_counts_primary_outcomes.index = bin_counts_primary_outcomes.index.fillna('N.A.').astype(str)
+    # Plot A
+    bars_0 = axs[0].bar(bin_counts_primary_outcomes.index, bin_counts_primary_outcomes, color='lightgrey', zorder=2)
+
+    for i, value in enumerate(bin_counts_primary_outcomes):
+        axs[0].text(i, value + 0.1, str(int(value)), ha='center', va='bottom')
+        
+    axs[0].tick_params(axis='y', labelsize=14)
+    axs[0].tick_params(axis='x', labelsize=14)
+    axs[0].grid(axis='y', linestyle='--', alpha=0.6, zorder=1)
+    axs[0].set_xlabel('Number of Primary Outcomes', fontsize=14)
+    axs[0].set_title('Primary Outcomes', fontsize=14)
+    axs[0].text(-0.03, 1.05, 'A', transform=axs[0].transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+
+    # Plot B
+    unique_pairs_secondary_outocome = trial_design[['nct_id', 'number_of_secondary_outcomes_to_measure', 'binned_secondary_outcomes']].drop_duplicates()
+
+    # Count occurrences in each bin including NaN for 'not reported'
+    bin_counts_secondary_outcomes = unique_pairs_secondary_outocome['binned_secondary_outcomes'].value_counts().reindex(labels + [np.nan]).fillna(0)
+    bin_counts_secondary_outcomes[np.nan] = len(unique_pairs_secondary_outocome[unique_pairs_secondary_outocome['number_of_secondary_outcomes_to_measure'].isna()])
+    bin_counts_secondary_outcomes = bin_counts_secondary_outcomes.rename(index={pd.NA: 'N.A.'})
+    bin_counts_secondary_outcomes.index = bin_counts_secondary_outcomes.index.fillna('N.A.').astype(str)
+
+    bars_1 = axs[1].bar(bin_counts_secondary_outcomes.index, bin_counts_secondary_outcomes, color='lightgrey', zorder=2)
+
+    for i, value in enumerate(bin_counts_secondary_outcomes):
+        axs[1].text(i, value + 0.1, str(int(value)), ha='center', va='bottom')
+        
+    axs[1].tick_params(axis='y', labelsize=14)
+    axs[1].tick_params(axis='x', labelsize=14)
+    axs[1].grid(axis='y', linestyle='--', alpha=0.6, zorder=1)
+    axs[1].set_xlabel('Number of Secondary Outcomes', fontsize=14)
+    axs[1].set_title('Secondary Outcomes', fontsize=14)
+    axs[1].text(-0.03, 1.05, 'B', transform=axs[1].transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+
+    plt.tight_layout()
+
+    plt.savefig(output_file)
 
 def main(metadata_file, enrollment_file, output_files):
     # Load the input files
@@ -222,7 +273,7 @@ def main(metadata_file, enrollment_file, output_files):
     viz_allocation(trial_metadata, output_files[0])
     viz_masking(trial_metadata, output_files[1])
     viz_facilities_enrollment(trial_metadata, trial_enrollment, output_files[2])
-
+    viz_outcomes(trial_metadata, output_files[3])
 
 if __name__ == "__main__":
     if "snakemake" in globals():

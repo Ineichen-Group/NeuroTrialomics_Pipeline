@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def classify_enrollment(enrollment):
     if 0 <= enrollment <= 10:
@@ -13,6 +14,30 @@ def classify_enrollment(enrollment):
         return ">1,000"
     else:
         return "not reported"
+
+def bin_facilities_column(number_of_facilities_series):
+    number_of_facilities_series = pd.to_numeric(number_of_facilities_series, errors='coerce')
+
+    # Define the bins and labels
+    bins = [0, 2, 10, 20, 30, 40, 50, float('inf')]
+    labels = ['1', '2-10', '11-20', '21-30', '31-40', '41-50', '>50']
+
+    # Bin the data
+    binned_facilities = pd.cut(number_of_facilities_series, bins=bins, labels=labels, right=False, include_lowest=False)
+
+    return binned_facilities
+
+def bin_number_of_outcomes_column(number_of_outcomes_series):
+    number_of_outcomes_series = pd.to_numeric(number_of_outcomes_series, errors='coerce')
+
+    # Define the bins and labels
+    bins = [0, 2, 5, 10, 20, np.inf]
+    labels = ['1', '2-5', '6-10', '11-20', '>20']
+    # Bin the data
+    binned_outcomes = pd.cut(number_of_outcomes_series, bins=bins, labels=labels, right=False, include_lowest=False)
+
+    return binned_outcomes
+
     
 def main(metadata_file, ner_annotations_file, enrollment_file, output_files):
     # Load the input files
@@ -40,12 +65,14 @@ def main(metadata_file, ner_annotations_file, enrollment_file, output_files):
     print('Size trial_metadata: ', len(trial_metadata))
     trial_metadata.to_csv(output_files[1], index=False)
 
-    trial_design = df[['nct_id','allocation', 'masking', 'number_of_primary_outcomes_to_measure', 'number_of_secondary_outcomes_to_measure', 'number_of_other_outcomes_to_measure','number_of_facilities', 'country', 'country_name', 'start_year']].drop_duplicates()
+    trial_design = df[['nct_id','allocation', 'masking', 'number_of_primary_outcomes_to_measure', 'number_of_secondary_outcomes_to_measure', 'number_of_other_outcomes_to_measure','number_of_facilities', 'country', 'start_year']].drop_duplicates()
     # Fill NA values in all columns except 'start_year'
-    columns_to_fill = trial_design.columns.difference(['start_year'])
+    columns_to_fill = ['allocation', 'masking', 'country'] #trial_design.columns.difference(['start_year', 'number_of_facilities']) 
     trial_design[columns_to_fill] = trial_design[columns_to_fill].fillna('not reported')
-            
-    #trial_design.fillna('not reported', inplace=True)
+    trial_design['binned_facilities'] = bin_facilities_column(trial_design['number_of_facilities'])
+    trial_design['binned_primary_outcomes'] = bin_number_of_outcomes_column(trial_design['number_of_primary_outcomes_to_measure'])
+    trial_design['binned_secondary_outcomes'] = bin_number_of_outcomes_column(trial_design['number_of_secondary_outcomes_to_measure'])
+
     print('Size trial_design: ', len(trial_design))
     trial_design.to_csv(output_files[2], index=False)
 
@@ -57,15 +84,11 @@ def main(metadata_file, ner_annotations_file, enrollment_file, output_files):
     print('Size df_funding: ', len(df_funding))
     df_funding.to_csv(output_files[4], index=False)
 
-    df_country = df[['nct_id', 'country']].drop_duplicates()
-    print('Size df_country: ', len(df_country))
-    df_country.to_csv(output_files[5], index=False)
-
     trials_ids_unique = df[['nct_id','start_year']].drop_duplicates()
     trials_with_participants = trials_ids_unique.merge(aact_baseline_counts, how='left', on='nct_id')
     trials_with_participants['enrollment_class'] = trials_with_participants['enrollment'].apply(classify_enrollment)
     print('Size trials_with_participants: ', len(trials_with_participants))
-    trials_with_participants.to_csv(output_files[6], index=False)
+    trials_with_participants.to_csv(output_files[5], index=False)
 
 
 if __name__ == "__main__":
