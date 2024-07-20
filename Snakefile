@@ -32,3 +32,12 @@ rule viz_design_characteristics:
         "viz/design_trial_size_facilities_enrollment.pdf"
     script:
         "scripts/viz_design_characteristics.py"
+
+rule viz_country_map:
+    input:
+        "data/out/trial_design_metadata.csv"
+    output:
+        "viz/trials_world_map.pdf"
+    script:
+        "scripts/viz_countries.py"
+
