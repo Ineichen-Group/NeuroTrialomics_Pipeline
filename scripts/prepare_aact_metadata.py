@@ -38,6 +38,14 @@ def bin_number_of_outcomes_column(number_of_outcomes_series):
 
     return binned_outcomes
 
+# Define a function to replace agency_class based on sponsor_name
+def replace_agency_class(row):
+    if 'university' in row['sponsor_name'].lower() or ('universita' in row['sponsor_name'].lower()) or ('université' in row['sponsor_name'].lower()) or ('universität' in row['sponsor_name'].lower()) or ('universiteit' in row['sponsor_name'].lower())or ('universidad' in row['sponsor_name'].lower()):
+        return 'UNIVERSITY'
+    elif 'hospital' in row['sponsor_name'].lower():
+        return 'HOSPITAL'
+    else:
+        return row['agency_class']
     
 def main(metadata_file, ner_annotations_file, enrollment_file, output_files):
     # Load the input files
@@ -66,8 +74,7 @@ def main(metadata_file, ner_annotations_file, enrollment_file, output_files):
     trial_metadata.to_csv(output_files[1], index=False)
 
     trial_design = df[['nct_id','allocation', 'masking', 'number_of_primary_outcomes_to_measure', 'number_of_secondary_outcomes_to_measure', 'number_of_other_outcomes_to_measure','number_of_facilities', 'country', 'start_year']].drop_duplicates()
-    # Fill NA values in all columns except 'start_year'
-    columns_to_fill = ['allocation', 'masking', 'country'] #trial_design.columns.difference(['start_year', 'number_of_facilities']) 
+    columns_to_fill = ['allocation', 'masking', 'country']
     trial_design[columns_to_fill] = trial_design[columns_to_fill].fillna('not reported')
     trial_design['binned_facilities'] = bin_facilities_column(trial_design['number_of_facilities'])
     trial_design['binned_primary_outcomes'] = bin_number_of_outcomes_column(trial_design['number_of_primary_outcomes_to_measure'])
@@ -82,6 +89,7 @@ def main(metadata_file, ner_annotations_file, enrollment_file, output_files):
 
     df_funding = df[['nct_id', 'start_year', 'agency_class', 'lead_or_collaborator', 'sponsor_name', 'phase']].drop_duplicates()
     print('Size df_funding: ', len(df_funding))
+    df_funding['agency_class'] = df_funding.apply(replace_agency_class, axis=1)
     df_funding.to_csv(output_files[4], index=False)
 
     trials_ids_unique = df[['nct_id','start_year']].drop_duplicates()

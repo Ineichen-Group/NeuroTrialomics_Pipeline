@@ -49,3 +49,11 @@ rule viz_results_reporting_status:
         "viz/completed_trials_results_reporting.pdf"
     script:
         "scripts/viz_results_reporting_status.py"
+
+rule viz_sponsorship:
+    input:
+        "data/out/trial_sponsorship_metadata.csv"
+    output:
+        "viz/lead_funding_agency.pdf"
+    script:
+        "scripts/viz_sponsorship.py"
